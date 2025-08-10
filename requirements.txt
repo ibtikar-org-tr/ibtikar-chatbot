@@ -46,3 +46,16 @@ isort>=5.12.0
 flake8>=6.1.0
 mypy>=1.7.0
 pre-commit>=3.5.0
+
+# Scraper
+beautifulsoup4
+requests
+bs4
+lxml
+pymongo       # For local MongoDB or CosmosDB (API compatibility)
+azure-storage-blob
+numpy
+selenium
+playwright 
+PyPDF2
+python-docx
