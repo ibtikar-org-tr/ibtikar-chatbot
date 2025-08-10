@@ -72,11 +72,11 @@ else:
     vector_store = VectorStoreHandler()  # Could handle other backends
 
 class ScrapeRequest(BaseModel):
-    url: str= Form(None),
+    url: str = Form(None),
     file: UploadFile = File(None)
 
 @app.post("/v1/scrape")
-async def scrape_website(request: ScrapeRequest):
+async def scrape_website(file: UploadFile = File(None), url: str = Form(None)):
     """
     Scrape a website starting from the given URL, store the data,
     and index it in a vector store if applicable.
@@ -92,20 +92,20 @@ async def scrape_website(request: ScrapeRequest):
 
         documents = []
 
-        if request.file is not None:
-            contents = await request.file.read()
+        if file is not None:
+            contents = await file.read()
             from io import BytesIO
             import docx
 
             try:
                 doc = docx.Document(BytesIO(contents))
                 text = "\n".join([p.text for p in doc.paragraphs])
-                documents.append({"url": request.file.filename, "content": text})
+                documents.append({"url": file.filename, "content": text})
             except Exception as e:
                 raise HTTPException(status_code=400, detail=f"File processing error: {e}")
 
-        if request.url:
-            raw_data = await scraper.scrape_website(request.url)
+        if url:
+            raw_data = await scraper.scrape_website(url)
             cleaned_docs = [clean_data(doc) for doc in raw_data]
             documents.extend(cleaned_docs)
 
@@ -118,7 +118,7 @@ async def scrape_website(request: ScrapeRequest):
         # Add to vector store
         vector_store.add_documents(cleaned_docs)
 
-        return {"message": f"Scraped and stored data from {request.url}."}
+        return {"message": f"Scraped and stored data from {url}."}
     except Exception as e:
         logging.error(f"Error in /scrape: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
@@ -134,4 +134,3 @@ async def search(q: str):
     except Exception as e:
         logging.error(f"Error in /search: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
-
