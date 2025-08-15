@@ -6,25 +6,53 @@
 
 An intelligent Arabic-first RAG (Retrieval-Augmented Generation) chatbot system designed specifically for the Ibtikar community - a network of Arabic-speaking university students passionate about innovation, technology, research, and development.
 
+## 📁 Project Structure
+
+```
+ibtikar-chatbot/
+├── 📄 README.md              # This file - Project overview and quick start
+├── 📄 LICENSE                # MIT License
+├── 📁 scrapper/              # Main application code
+│   ├── 🎯 core/              # Core application configuration
+│   ├── 🗃️ models/            # Database models
+│   ├── 📋 schemas/           # API schemas  
+│   ├── 🔄 crud/              # Database operations
+│   ├── 🌐 endpoints/         # API endpoints
+│   ├── ⚙️ services/          # Business logic services
+│   ├── 🗃️ alembic/           # Database migrations
+│   ├── 📄 main.py            # Original application entry point
+│   ├── 📄 main_new.py        # Refactored application entry point
+│   ├── 📄 pyproject.toml     # Project dependencies
+│   ├── 📄 requirements.txt   # Requirements file
+│   ├── 📄 .env.example       # Environment configuration template
+│   ├── 📄 docker-compose.yml # Docker composition
+│   ├── 📄 Dockerfile         # Docker container
+│   └── 📚 STRUCTURE_GUIDE.md # Detailed structure documentation
+└── 📁 .git/                 # Git repository
+```
+
 ## 🎯 Features
 
 - **Arabic-First NLP**: Native Arabic language understanding with dialect support
 - **RAG Pipeline**: Advanced retrieval-augmented generation for accurate responses
-- **Real-time Chat**: WebSocket-based conversational interface
+- **Web Scraping**: Automated content extraction from websites and documents
+- **Vector Search**: Semantic search using embeddings and vector databases
 - **Knowledge Management**: Automated ingestion and processing of community documents
-- **User Management**: Secure authentication and user profiling
-- **Analytics Dashboard**: Usage tracking and performance monitoring
-- **Multilingual Support**: Arabic primary, English secondary language support
+- **API-First Design**: RESTful API with automatic documentation
+- **Modular Architecture**: Clean, maintainable code structure
+- **Production Ready**: Proper logging, error handling, and configuration management
 
 ## 🏗 Architecture
 
 ```
 ├── Frontend (Web App)
 ├── Backend (FastAPI)
-│   ├── RAG Pipeline (LangChain)
-│   ├── Vector Store (ChromaDB/FAISS)
-│   └── Database (PostgreSQL)
-└── Monitoring & Analytics
+│   ├── Web Scraper (Requests/Selenium/Playwright)
+│   ├── Data Processing (Arabic Text Processing)
+│   ├── Vector Store (FAISS/Upstash)
+│   ├── Embedding Service (BGE-M3)
+│   └── Database (PostgreSQL - Optional)
+└── Storage (Local/Azure Blob)
 ```
 
 ## 🚀 Quick Start
@@ -32,8 +60,6 @@ An intelligent Arabic-first RAG (Retrieval-Augmented Generation) chatbot system 
 ### Prerequisites
 
 - Python 3.11+
-- PostgreSQL 15+
-- Redis 7+
 - Git
 
 ### Installation
@@ -44,36 +70,88 @@ An intelligent Arabic-first RAG (Retrieval-Augmented Generation) chatbot system 
    cd ibtikar-chatbot
    ```
 
-2. **Create virtual environment**
+2. **Navigate to the scrapper directory**
+   ```bash
+   cd scrapper
+   ```
+
+3. **Create virtual environment**
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-3. **Install dependencies**
+4. **Install dependencies**
    ```bash
-   pip install -r requirements.txt
+   pip install -e .
    ```
 
-4. **Set up environment variables**
+5. **Set up environment variables**
    ```bash
    cp .env.example .env
    # Edit .env with your configuration
    ```
 
-5. **Initialize database**
-   ```bash
-   alembic upgrade head
-   ```
-
 6. **Run the application**
    ```bash
-   uvicorn main:app --reload
+   # Use the new refactored version
+   python main_new.py
+   
+   # Or use uvicorn directly
+   uvicorn main_new:app --reload
    ```
 
 The API will be available at `http://localhost:8000`
 
-## 📁 Project Structure
+## 📚 Documentation
+
+- **API Documentation**: Visit `http://localhost:8000/docs` when running
+- **Structure Guide**: See `scrapper/STRUCTURE_GUIDE.md` for detailed architecture
+- **Configuration**: Check `scrapper/.env.example` for all available settings
+
+## 🔧 Configuration
+
+The application supports multiple backends:
+
+### Storage Backends
+- **local**: Store files locally (default)
+- **azure**: Use Azure Blob Storage
+
+### Vector Store Backends  
+- **faiss**: Local FAISS index (default)
+- **upstash**: Upstash Vector Database
+
+### Scraping Backends
+- **requests**: Simple HTTP requests (default)
+- **selenium**: Browser automation
+- **playwright**: Async browser automation
+
+## 🧪 Testing
+
+```bash
+cd scrapper
+python test_structure.py
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## � License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🏢 About Ibtikar
+
+Ibtikar is a thriving community of Arabic-speaking university students united by their passion for innovation, technology, research, and development. We foster collaboration, knowledge sharing, and academic excellence among our members.
+
+---
+
+**Note**: All application code is contained within the `scrapper/` directory. The root directory contains only documentation and project metadata.
 
 ```
 ibtikar-chatbot/
