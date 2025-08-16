@@ -153,6 +153,10 @@ async def scrape_predefined_websites():
         "https://github.com/ibtikar-org-tr/bylaws/blob/main/TEKNOFEST_ar/README.md",
         "https://github.com/ibtikar-org-tr/bylaws/blob/main/TEKNOFEST_ar/TAP_RT.md",
         "https://www.instagram.com/ibtikar.org.tr/",
+        "https://docs.google.com/document/d/1NzO4Lu9zAlUeDdaVIZCWlnz8_H4UCD3tMAyTIfYwSVs/edit?tab=t.0",
+        "https://docs.google.com/document/d/1YFkSBO3L2vziQOXy8ExOyv3XaPEwTWi_1yHSNrq6yoA/edit?usp=drive_link",
+        "https://docs.google.com/document/d/1rqz-KagMXdmgDP4MR8L63E2YXGGZAwIYztGc1jJc66g/edit?usp=drive_link",
+        "https://teknofest.ibtikar.org.tr/",
     ]
     try:
         scraper = WebScraper()

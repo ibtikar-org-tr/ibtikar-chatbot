@@ -57,9 +57,14 @@ class WebScraper:
             logging.info(f"Scraping with Playwright for: {start_url}")
             return await self._bfs_playwright_instagram(start_url)
         
-        if 'docs.google.com' in start_url:
-            logging.info(f"Scraping Google Docs with Playwright for: {start_url}")
-            return await self._bfs_playwright_google_docs(start_url)
+        if 'docs.google.com/document' in start_url:
+            logging.info(f"Scraping with requests for: {start_url}")
+            start_url = self._convert_gdocs_to_export_url(start_url)
+            loop = asyncio.get_event_loop()
+            documents = []
+            # BFS in a thread, because requests is sync
+            await loop.run_in_executor(None, self._bfs_requests, start_url, documents)
+            return documents
 
         if self.scrape_backend == "selenium":
             logging.info(f"Scraping with Selenium for: {start_url}")
@@ -380,8 +385,8 @@ class WebScraper:
                         try:
                             await page.keyboard.press('Escape')
                             await asyncio.sleep(2)
-                        except:
-                            pass
+                        except Exception as e:
+                            print("Exception: ",e)
                         
                         # Wait for post content
                         try:
@@ -553,150 +558,6 @@ class WebScraper:
             await browser.close()
             print("Cookies kaydedildi!")
 
-    async def _bfs_playwright_google_docs(self, start_url):
-        """
-        BFS approach specifically for Google Docs using async Playwright.
-        """
-        documents = []
-        queue = [start_url]
-
-        while queue:
-            url = queue.pop(0)
-            if url in self.visited_urls:
-                continue
-
-            self.visited_urls.add(url)
-            logging.info(f"[Google Docs Playwright] Visiting: {url}")
-
-            try:
-                # First try export URL approach
-                export_url = self._convert_gdocs_to_export_url(url)
-                
-                async with async_playwright() as pw:
-                    browser = await pw.chromium.launch(headless=False)
-                    context = await browser.new_context(
-                        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                        extra_http_headers={
-                            "Accept-Language": "en-US,en;q=0.9",
-                            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
-                        }
-                    )
-                    
-                    page = await context.new_page()
-                    
-                    # Try export URL first
-                    try:
-                        logging.info(f"[Google Docs] Trying export URL: {export_url}")
-                        response = await page.goto(export_url, timeout=20000)
-                        
-                        # Wait a bit for content to load
-                        await asyncio.sleep(3)
-                        
-                        # Check if we got text content
-                        content_type = response.headers.get('content-type', '').lower()
-                        if 'text/plain' in content_type:
-                            # Direct text content
-                            content = await page.evaluate('document.body.textContent || document.body.innerText')
-                        else:
-                            # HTML content - extract text
-                            page_html = await page.content()
-                            soup = BeautifulSoup(page_html, "lxml")
-                            content = self._extract_text(soup)
-                        
-                        if content and len(content.strip()) > 200:  # Good content threshold
-                            documents.append({"url": url, "content": content.strip()})
-                            logging.info(f"[Google Docs] Successfully extracted {len(content)} characters via export URL")
-                            await browser.close()
-                            continue
-                        else:
-                            logging.warning(f"[Google Docs] Export URL returned insufficient content, trying original URL")
-                            
-                    except Exception as e:
-                        logging.warning(f"[Google Docs] Export URL failed: {e}, trying original URL")
-                    
-                    # Fallback: Try original document with special handling
-                    try:
-                        logging.info(f"[Google Docs] Trying original URL: {url}")
-                        await page.goto(url, timeout=20000)
-                        
-                        # Wait for Google Docs to load
-                        try:
-                            await page.wait_for_selector('[role="textbox"]', timeout=15000)
-                        except PlaywrightTimeoutError:
-                            logging.warning(f"[Google Docs] Timeout waiting for textbox")
-                        
-                        # Special Google Docs scroll - collect text as we scroll
-                        all_text_parts = []
-                        previous_height = 0
-                        scroll_attempts = 0
-                        max_scrolls = 50
-                        
-                        while scroll_attempts < max_scrolls:
-                            # Extract current visible text
-                            current_text = await page.evaluate("""
-                                () => {
-                                    // Try multiple selectors for Google Docs content
-                                    const selectors = [
-                                        '[role="textbox"] span',
-                                        '.kix-page span',
-                                        '[data-kix-lineview] span',
-                                        'div[contenteditable="true"] span'
-                                    ];
-                                    
-                                    let text = '';
-                                    for (const selector of selectors) {
-                                        const elements = document.querySelectorAll(selector);
-                                        if (elements.length > 0) {
-                                            text = Array.from(elements)
-                                                .map(el => el.textContent || '')
-                                                .filter(t => t.trim().length > 0)
-                                                .join(' ');
-                                            break;
-                                        }
-                                    }
-                                    return text;
-                                }
-                            """)
-                            
-                            if current_text and current_text not in all_text_parts:
-                                all_text_parts.append(current_text)
-                            
-                            # Scroll down using Page Down key
-                            await page.keyboard.press('PageDown')
-                            await asyncio.sleep(0.5)
-                            
-                            # Check if we've reached the bottom
-                            current_height = await page.evaluate('document.body.scrollHeight')
-                            if current_height == previous_height:
-                                # No new content, try a few more times
-                                scroll_attempts += 5
-                            else:
-                                previous_height = current_height
-                            
-                            scroll_attempts += 1
-                        
-                        # Combine all text parts
-                        combined_text = ' '.join(all_text_parts)
-                        
-                        if combined_text and len(combined_text.strip()) > 100:
-                            documents.append({"url": url, "content": combined_text.strip()})
-                            logging.info(f"[Google Docs] Successfully extracted {len(combined_text)} characters via original URL")
-                        else:
-                            logging.warning(f"[Google Docs] Failed to extract meaningful content from {url}")
-                            
-                    except Exception as e:
-                        logging.error(f"[Google Docs] Original URL approach failed: {e}")
-
-                    await browser.close()
-                    await asyncio.sleep(1)  # Rate limiting
-
-            except Exception as e:
-                logging.error(f"[Google Docs] Error visiting {url}: {e}", exc_info=True)
-                continue
-
-        return documents
-
-
     def _convert_gdocs_to_export_url(self, url):
         """
         Convert Google Docs URL to export URL for text extraction.
@@ -706,8 +567,10 @@ class WebScraper:
                 # Extract document ID
                 if '/d/' in url:
                     doc_id = url.split('/d/')[1].split('/')[0]
-                    return f"https://docs.google.com/document/d/{doc_id}/export?format=txt"
+                    return f"https://docs.google.com/document/d/{doc_id}/export?format=docx"
+            print(url)
             return url
         except Exception as e:
             logging.warning(f"[Google Docs] Failed to convert URL to export format: {e}")
             return url
+        
