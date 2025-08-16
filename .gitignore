@@ -205,3 +205,6 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+scrapper/**_cookies.json
+scrapper/scraped_data.json
