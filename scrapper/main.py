@@ -152,6 +152,7 @@ async def scrape_predefined_websites():
         "https://github.com/ibtikar-org-tr/bylaws/blob/main/FAQ.md",
         "https://github.com/ibtikar-org-tr/bylaws/blob/main/TEKNOFEST_ar/README.md",
         "https://github.com/ibtikar-org-tr/bylaws/blob/main/TEKNOFEST_ar/TAP_RT.md",
+        "https://www.instagram.com/ibtikar.org.tr/",
     ]
     try:
         scraper = WebScraper()
